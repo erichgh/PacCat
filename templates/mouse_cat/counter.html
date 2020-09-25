@@ -1,0 +1,9 @@
+{% extends "mouse_cat/base.html" %}
+
+{% block content %}
+<div id="content" class="old_ratonGato" style="padding-top:15rem;">
+    <h1 style="padding-bottom: 1rem">Contador de errores:</h1>
+    <p>Sesión actual: <b>{{ counter_session }}</b></p>
+    <p>Totales: <b>{{ counter_global }}</b></p>
+</div>
+{% endblock content %}

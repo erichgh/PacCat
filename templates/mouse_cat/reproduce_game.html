@@ -1,0 +1,162 @@
+{% extends "mouse_cat/base.html" %}
+
+{% block content %}
+
+<script type="text/javascript">
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    var csrftoken = getCookie('csrftoken');
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+var reproducing=-1;
+    function make_move(i){
+        /*Funcion que realiza movimientos para reproducir la partida.
+        Argumento de entrada: i
+            -1: Rebobinar
+            0: Stop
+            1: Avanzar
+            2: Reproducir
+         */
+        if (i === 1){
+            do_step(1);
+        }
+        else if(i === -1){
+            do_step(-1);
+        }
+
+        /*Si vamos a reproducir, ocultamos los botones*/
+        else if (i === 2){
+            $("#previous_button").fadeOut();
+            $("#next_button").fadeOut();
+            document.getElementById("play_stop_button").src="{{ baseUrl }}/img/icons/stop.png";
+            document.getElementById("play_stop_button").onclick=function() {make_move(0);};
+            do_step(1);
+            reproducing = setInterval(function() { do_step(1); },2000);
+        }
+
+        else if (i === 0){
+            clearInterval(reproducing);
+            reproducing = -1;
+            $("#previous_button").fadeIn();
+            $("#next_button").fadeIn();
+
+            document.getElementById("play_stop_button").src="{{ baseUrl }}/img/icons/solid-right-arrow.png";
+            document.getElementById("play_stop_button").onclick=function() {make_move(2);};
+        }
+
+    }
+
+function do_step(i) {
+    /*El parametro i puede ser 1 (avanazo 1 movimiento) o -1 (retrocedo)*/
+    $.ajax({
+    type: "POST",
+    url: '{% url 'get_move' %}',
+    token: csrftoken,
+    data: {
+        shift: i,
+        action: 'post'
+    },
+    success: function (response) {
+        /* Si se esta reproduciendo, ocultamos botones*/
+        if (reproducing !== -1){
+            $("#previous_button").fadeOut();
+            $("#next_button").fadeOut();
+        }
+
+        else{
+            /*Ponemos los botones en visibles o ocultos en función de hay movimiento disponible o no*/
+            if (response.previous === 0){
+                $("#previous_button").fadeOut();
+            }
+
+            else{
+                $("#previous_button").fadeIn();
+
+            }
+            $("#next_button").fadeIn("slow");
+        }
+
+        /* Si no hay next, mostramos el ganado de la partida y finalizamos. */
+        if (response.next === 0){
+            /* Finalizamos la partida */
+            clearInterval(reproducing);
+            $("#previous_button").fadeOut("slow");
+            $("#next_button").fadeOut("slow");
+            $("#play_stop_button").fadeOut("slow", function show_winner(){ $("#hidden_winner").fadeIn("slow");});
+        }
+
+        /* Sacamos las coordenadas buenas*/
+        var origin_x = response.origin % 8;
+        var origin_y = Math.trunc(response.origin/8);
+        var target_x = response.target % 8;
+        var target_y = Math.trunc(response.target/8);
+
+
+        var origin_cell = document.getElementById("cell_"+origin_x+"_"+origin_y);
+        var target_cell = document.getElementById("cell_"+target_x+"_"+target_y);
+
+        var move_aux = origin_cell.innerHTML;
+
+        /* Saco el identificador de la imagen para hacer el fade out*/
+        var id_aux_origin = "cell_"+origin_x+"_"+origin_y;
+        var id_aux_target = "cell_"+target_x+"_"+target_y;
+
+        var image_id = $("#"+id_aux_origin).children("img").attr("id");
+
+        $("#"+image_id).fadeOut(function () {$("#"+id_aux_origin).html("");});
+
+        $("#"+id_aux_target).hide();
+        target_cell.innerHTML = move_aux;
+        $("#"+id_aux_target).fadeIn();
+    }
+    });
+    }
+</script>
+
+<div id="content" class="old_ratonGato">
+    <div id="hidden_winner"><h4>{{ winner }}</h4></div>
+
+    <div>
+    <img id="previous_button" src="{{ baseUrl }}/img/icons/double-arrow-left.png" alt="previous_move" class="reproduction_images" onclick="make_move(-1)"></a>
+    <img id="next_button" src="{{ baseUrl }}/img/icons/double-arrow.png" alt="next_move" class="reproduction_images" onclick="make_move(1)"></a>
+    <img id="play_stop_button" src="{{ baseUrl }}/img/icons/solid-right-arrow.png" alt="reproduce" class="reproduction_images" onclick="make_move(2)"></a>
+
+
+    </div>
+    Cats: <b>{{ game.cat_user.username }}</b>
+    PAC: <b>{{ game.mouse_user.username }}</b>
+
+    {% if board %}
+    <div id="chess_div" class="">
+      {% include 'mouse_cat/board.html' %}
+    </div>
+    {% endif %}
+
+    <h3>Game: {{ game.id }}</h3>
+
+</div>
+{% endblock content %}

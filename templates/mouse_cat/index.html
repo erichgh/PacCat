@@ -1,0 +1,26 @@
+{% extends "mouse_cat/base.html" %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <section class="hero-section">
+        <div class="hero-slider owl-carousel">
+            <div class="hero-item set-bg d-flex align-items-center justify-content-center text-center"
+                data-setbg="{% static 'img/wallpaper1.jpg' %}">
+                <div class="container">
+                    <h2>Bienvenido</h2>
+                    <p>¡Aprende a jugar ahora al juego de moda!</p>
+                    <a href="{% static 'PacCat.pdf' %}" download="PacCat.pdf" class="site-btn">Manual de Instrucciones<img src="{% static 'img/icons/download.png' %}" alt="" style="width: 25px!important"/></a>
+                </div>
+            </div>
+            <div class="hero-item set-bg d-flex align-items-center justify-content-center text-center"
+                data-setbg="{% static 'img/wallpaper2.jpg' %}">
+                <div class="container">
+                    <h2>Multijugador</h2>
+                    <p>Si lo prefieres puedes unirte directamente a la partida de tu amigo y retarlo a un duelo.</p>
+                    <a href="{% url 'select_game' tipo=2 %}" class="site-btn">Unirse a una partida<img src="{% static 'img/icons/double-arrow.png' %}" alt="#" /></a>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock content %}

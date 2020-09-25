@@ -1,0 +1,55 @@
+{% extends "mouse_cat/base.html" %}
+
+{% block content %}
+
+<div id="content" class="old_ratonGato">
+    <div class="search">
+        <ul class="filtro">
+            <li><a href="#">Filtrar partidas</a>
+                <ul class="categorias">
+                    <li><a href="{% url 'select_game' tipo=3 %}">Sin filtro</a></li>
+                    <li><a href="{% url 'select_game' tipo=3 filter=1 %}">Finalizadas como gato</a></li>
+                    <li><a href="{% url 'select_game' tipo=3 filter=2 %}">Finalizadas como PAC</a></li>
+                    <li><a href="{% url 'select_game' tipo=3 filter=4 %}">He ganado</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    {% if not games %}
+        No has finalizado partidas, o no hay coincidencias con el filtro aplicado
+    {% else %}
+        <h1>Selecciona la partida para reproducir</h1>
+        <div class=main-select>
+            <table class=tabla-juegos>
+            <thead>
+                <tr>
+                    <th>Usuario gato</th>
+                    <th>Usuario PAC</th>
+                    <th>Id juego</th>
+                    <th>Reproducir</th>
+                </tr>
+            </thead>
+
+            {% for game in games %}
+                <tr>
+                    <td>{{game.cat_user}}</td>
+                    <td>{{game.mouse_user}}</td>
+                    <td>{{game.id}}</td>
+                    {% if request.user == game.cat_user %}
+                        <td><a href="{% url 'select_game' tipo=3 game_id=game.id %}"><img src="{{ baseUrl }}/img/personajes/char1.png" alt="Catimage" class="imagestylesmall"></a></td>
+
+                    {% elif request.user == game.mouse_user %}
+                        <td><a href="{% url 'select_game' tipo=3 game_id=game.id %}"><img src="{{ baseUrl }}/img/personajes/main.png" alt="Pacimage" class="imagestylesmall"></a></td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </table>
+
+            {% include 'mouse_cat/pagination.html' %}
+
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}
+
+

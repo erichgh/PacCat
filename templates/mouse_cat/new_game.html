@@ -1,0 +1,8 @@
+{% extends "mouse_cat/base.html" %}
+
+{% block content %}
+<div id="content" class="old_ratonGato" style="padding-top:15rem;">
+    <h1 style="padding-bottom: 1rem;">Nueva partida</h1>
+    <p>Partida <b>{{ game.id }}</b> creada correctamente por el usuario <b>{{ game.cat_user.username }}</b></p>
+</div>
+{% endblock content %}

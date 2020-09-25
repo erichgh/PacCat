@@ -1,0 +1,8 @@
+*.pyc
+venv
+staticfiles
+uploads
+db.sqlite3
+.idea
+venv
+staticHeroku

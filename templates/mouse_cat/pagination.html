@@ -1,0 +1,16 @@
+{% load staticfiles %}
+
+{% static "" as baseUrl %}
+<span class="align-content-center">
+    {% if games.has_previous %}
+        <a href="?page={{ games.previous_page_number }}"><img src="{{ baseUrl }}/img/icons/solid-left-arrow.png" alt="Previous_table" class="imagestylesmall"></a>
+    {% endif %}
+
+    <span class="current">
+        Page {{ games.number }} of {{ games.paginator.num_pages }}
+    </span>
+
+    {% if games.has_next %}
+        <a href="?page={{ games.next_page_number }}"><img src="{{ baseUrl }}/img/icons/solid-right-arrow.png" alt="Next_table" class="imagestylesmall"></a>
+    {% endif %}
+</span>

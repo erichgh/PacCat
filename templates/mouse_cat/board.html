@@ -1,0 +1,39 @@
+{% load staticfiles %}
+
+{% if board %}
+    {% static "" as baseUrl %}
+    <div class="chess_board">
+    {% for miniBoard in board %}
+        {% if forloop.counter0|divisibleby:2 %}
+            {% for item in miniBoard %}
+                {% if forloop.counter0|divisibleby:2 %}
+                <div id="cell_{{forloop.counter0}}_{{forloop.parentloop.counter0}}" class="drop black" >
+                {% else %}
+                <div id="cell_{{forloop.counter0}}_{{forloop.parentloop.counter0}}" class="drop white" >
+                {% endif %}
+                    {% if item ==  -1 %}
+                        <img class="drag square_image" id="{{forloop.counter0}}_{{forloop.parentloop.counter0}}" draggable="true" src="{{ baseUrl }}/img/personajes/main.png" alt="Pacimage">
+                    {% elif item == 1 or item == 2 or item == 3 or item == 4 %}
+                        <img class="drag square_image" id="{{forloop.counter0}}_{{forloop.parentloop.counter0}}" draggable="true" src="{{ baseUrl }}/img/personajes/char{{item}}.png" alt="Catimage" class="square_image">
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            {% for item in miniBoard %}
+                {% if forloop.counter0|divisibleby:2 %}
+                <div id="cell_{{forloop.counter0}}_{{forloop.parentloop.counter0}}" class="drop white" >
+                {% else %}
+                <div id="cell_{{forloop.counter0}}_{{forloop.parentloop.counter0}}" class="drop black" >
+                {% endif %}
+                    {% if item ==  -1 %}
+                        <img class="drag square_image" id="{{forloop.counter0}}_{{forloop.parentloop.counter0}}" draggable="true" src="{{ baseUrl }}/img/personajes/main.png" alt="Pacimage">
+                    {% elif item == 1 or item == 2 or item == 3 or item == 4 %}
+                        <img class="drag square_image" id="{{forloop.counter0}}_{{forloop.parentloop.counter0}}" draggable="true" src="{{ baseUrl }}/img/personajes/char{{item}}.png" alt="Catimage" class="square_image">
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+    </div>
+
+{% endif %}

@@ -1,0 +1,11 @@
+{% extends "mouse_cat/base.html" %}
+
+{% block content %}
+<div id="content" class="old_ratonGato">
+    <h1>Partida finalizada</h1>
+    <h2>{{ winner }}</h2>
+
+    <h3>Ultima situacion de la partida:</h3>
+    {% include 'mouse_cat/board.html' %}
+</div>
+{% endblock content %}

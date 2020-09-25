@@ -1,0 +1,266 @@
+{% extends "mouse_cat/base.html" %}
+
+{% load staticfiles %}
+
+{% block content %}
+
+
+<script type="text/javascript">
+
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+var csrftoken = getCookie('csrftoken');
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    }
+});
+
+$(document).ready(addDragDrop);
+var loopTurn = 0;
+function addDragDrop() {
+    checkTurn();
+    $(document).on('dragover', '.drop', function (e) {
+        e.preventDefault();
+    });
+    $(document).on('dragstart', '.drag', function (e) {
+        e.originalEvent.dataTransfer.setData('origin', e.target.parentNode.id);
+    });
+    $(document).on('drop', '.drop', function (e) {
+        e.preventDefault();
+        var originCell = e.originalEvent.dataTransfer.getData('origin');
+
+        if (loopTurn !== 0) {
+            swal("¡Oye!", "Es el turno de tu contrincante, tranquilo.", "error");
+        } else if (originCell !== e.target.id && e.target.id.indexOf("cell") !== -1) {
+            do_move(originCell.split('_')[1], originCell.split('_')[2], e.target.id.split('_')[1], e.target.id.split('_')[2]);
+            var move_aux = document.getElementById(originCell).innerHTML;
+            e.target.innerHTML = move_aux;
+            document.getElementById(originCell).innerText = "";
+        }
+        $(this).off('dragover drop');
+
+    });
+}
+
+function do_move(o_x, o_y, t_x, t_y) {
+    var o = parseInt(o_x,10) + parseInt(o_y,10)*8;
+    var t = parseInt(t_x,10) + parseInt(t_y,10)*8;
+
+    $.ajax({
+    type: "POST",
+    url: '{% url 'move' %}',
+    token: csrftoken,
+    data: {
+        origin: o,
+        target: t,
+        action: 'post'
+    },
+    success: function (data) {
+        if (data.status === 0) {
+            checkTurn();
+        } else if (data.status < 0) {
+            if (data.status === -1) {
+                swal("Cuidado!", "El movimiento realizado no es correcto, intentelo de nuevo.", "warning");
+            } else {
+                swal("Error :(", "El movimiento realizado no es correcto, intentelo de nuevo.", "error");
+            }
+            var origin_cell = document.getElementById("cell_" + t_x + "_" + t_y);
+            var target_cell = document.getElementById("cell_" + o_x + "_" + o_y);
+
+            var move_aux = origin_cell.innerHTML;
+
+            /* Saco el identificador de la imagen para hacer el fade out*/
+            var id_aux_origin = "cell_" + t_x + "_" + t_y;
+            var id_aux_target = "cell_" + o_x + "_" + o_y;
+
+            var image_id = $("#"+id_aux_origin).children("img").attr("id");
+
+            $("#" + image_id).fadeOut(function () {
+                $("#" + id_aux_origin).html("");
+            });
+
+            $("#" + id_aux_target).hide();
+            target_cell.innerHTML = move_aux;
+            $("#" + id_aux_target).fadeIn();
+        } else {
+            location.reload(true);
+        }
+    }
+    });
+}
+
+function checkTurn() {
+    loopTurn = setInterval(turnLoop,2000);
+    $( ".waiting").fadeIn("slow");
+    $( ".turn").fadeOut("slow");
+    turnLoop();
+}
+
+function turnLoop(){
+        $.ajax({
+            url: '{% url 'turn' game_id=game.id %}',
+            token: csrftoken,
+            type: 'post',
+            success: function(response){
+                if (response.winner === 1) {
+                    location.reload(true);
+                }
+                if (response.turn === false && "{{game.mouse_user.id}}" === "{{request.user.id}}"
+                    || response.turn === true && "{{game.mouse_user.id}}" !== "{{request.user.id}}")
+                {
+                    clearInterval(loopTurn);
+                    loopTurn = 0;
+                    $( ".waiting").fadeOut("slow");
+                    $( ".turn").fadeIn("slow");
+
+
+                    if (response.origin !== -1) {
+                        var origin_x = response.origin % 8;
+                        var origin_y = Math.trunc(response.origin / 8);
+                        var target_x = response.target % 8;
+                        var target_y = Math.trunc(response.target / 8);
+
+
+                        var origin_cell = document.getElementById("cell_" + origin_x + "_" + origin_y);
+                        var target_cell = document.getElementById("cell_" + target_x + "_" + target_y);
+
+                        var move_aux = origin_cell.innerHTML;
+
+                        /* Saco el identificador de la imagen para hacer el fade out*/
+                        var id_aux_origin = "cell_" + origin_x + "_" + origin_y;
+                        var id_aux_target = "cell_" + target_x + "_" + target_y;
+
+
+                        var image_id = $("#"+id_aux_origin).children("img").attr("id");
+
+                        $("#" + image_id).fadeOut(function () {
+                            $("#" + id_aux_origin).html("");
+                        });
+
+                        $("#" + id_aux_target).hide();
+                        target_cell.innerHTML = move_aux;
+                        $("#" + id_aux_target).fadeIn();
+                    }
+
+
+                }
+            }
+        });
+    }
+
+    $(document).ready(function() {
+    var audioElement = document.createElement('audio');
+    audioElement.setAttribute('src', '{{ baseUrl }}/music/song.mp3');
+    audioElement.volume = 0.01;
+
+    audioElement.addEventListener('ended', function() {
+        this.play();
+    }, false);
+
+    $('#pause').click(function() {
+        audioElement.pause();
+    });
+
+    audioElement.play();
+});
+
+</script>
+
+
+<div class="container-fluid text-center old_ratonGato">
+
+  <div class="row content">
+    <div class="col-sm-2 sidenav izquierda">
+        {% if request.user == game.cat_user %}
+            Tu:
+           <b>{{ game.cat_user.username }}</b>
+            <br/>
+           <img src="{{ baseUrl }}/img/personajes/char1.png" alt="cat" class="imagestylesmall"></a>
+        {% else %}
+            Rival:
+           <b>{{ game.cat_user.username }}</b>
+            <br/>
+            <img src="{{ baseUrl }}/img/personajes/char1.png" alt="cat" class="imagestylesmall"></a>
+
+        {% endif %}
+
+
+        {% if game.mouse_user.id == request.user.id %}
+            <div class="waiting" style="display: none">
+                Esperando rival...
+                <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+            </div>
+        {% else %}
+            <div class="turn">¡ES TU TURNO!</div>
+        {% endif %}
+
+
+    </div>
+
+    <div id="chess_div" class="col-sm-8 text-left">
+      {% include 'mouse_cat/board.html' %}
+    </div>
+    <div class="col-sm-2 sidenav derecha">
+      <div class="well">
+            {% if request.user == game.mouse_user %}
+            Tu:
+            <b>{{ game.mouse_user.username }}</b>
+            <br/>
+
+           <img src="{{ baseUrl }}/img/personajes/main.png" alt="pac" class="imagestylesmall"></a>
+            {% else %}
+            Rival:
+            <b>{{ game.mouse_user.username }}</b>
+            <br/>
+
+            <img src="{{ baseUrl }}/img/personajes/main.png" alt="pac" class="imagestylesmall"></a>
+
+            {% endif %}
+
+          {% if game.mouse_user.id != request.user.id %}
+            <div class="waiting" style="display: none">
+                Esperando rival...
+                <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+            </div>
+          {% else %}
+            <div class="turn" style="visibility: visible">¡ES TU TURNO!</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+    <div class="responsive_game">
+            Jugando contra:
+            {% if request.user == game.mouse_user %}
+            <b>{{ game.cat_user.username }}</b>
+            {% else %}
+            <b>{{ game.mouse_user.username }}</b>
+            {% endif %}
+            <div class="waiting" style="display: none">
+                <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+                Esperando rival...
+            </div>
+            <div class="turn">¡ES TU TURNO!</div>
+    </div>
+</div>
+
+{% endblock content %}
